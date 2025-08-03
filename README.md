@@ -37,18 +37,17 @@ The app runs offline after the first load (except for AI API calls) with local c
 - 📊 **Debug Monitoring** – Comprehensive performance metrics  
 - 🔧 **Error Recovery** – Robust fallback mechanisms
 
----
+
 
 ## 🧭 Data Flow
 ```markdown
 
-```plaintext
 User Speech → Web Speech API → Text Transcript → AI API → AI Response → Browser TTS → Audio Playback
      ↓              ↓              ↓           ↓         ↓             ↓            ↓
   [Local] → [Browser] → [Memory] → [Network] → [Memory] → [Browser] → [Local]
 ```
 
----
+
 
 ## 🚀 Quick Start
 
@@ -187,13 +186,13 @@ TTS Not Working:
 - Check network connectivity
 - Review API rate limits
 
-  ---
+  
 
 ## 📁 Project Structure
 
 ```markdown
 
-```plaintext
+
 src/
 ├── components/
 │   ├── WebSpeechRecognition.tsx    # Main voice assistant component
@@ -211,7 +210,7 @@ src/
     └── globals.css                 # Global styles
 ```
 
----
+
 
     
 ## 🔄 Development Roadmap
