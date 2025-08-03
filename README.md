@@ -39,8 +39,8 @@ The app runs offline after the first load (except for AI API calls) with local c
 
 ---
 
-```markdown
 ## 🧭 Data Flow
+```markdown
 
 ```plaintext
 User Speech → Web Speech API → Text Transcript → AI API → AI Response → Browser TTS → Audio Playback
@@ -187,8 +187,11 @@ TTS Not Working:
 - Check network connectivity
 - Review API rate limits
 
-```markdown
+  ---
+
 ## 📁 Project Structure
+
+```markdown
 
 ```plaintext
 src/
@@ -207,6 +210,8 @@ src/
 └── styles/
     └── globals.css                 # Global styles
 ```
+
+---
 
     
 ## 🔄 Development Roadmap
@@ -232,19 +237,24 @@ src/
  - Advanced caching strategies
  - Voice activity detection
 
+   ---
+
 ## 🤝 Contributing
 
 - Fork the repository
 - Create a feature branch
   ```bash
+  
   (git checkout -b feature/amazing-feature)
   ```
 - Commit your changes
   ```bash
+  
   (git commit -m 'Add amazing feature')
   ```
 - Push to the branch
   ```bash
+  
   (git push origin feature/amazing-feature)
   ```
 - Open a Pull Request
@@ -255,6 +265,8 @@ src/
 - OpenAI and Google for AI API access
 - Next.js team for the excellent framework
 - Browser vendors for speech synthesis support
+
+---
 
 ## 📞 Contact
 ### Developer: Ritesh Sirpor
