@@ -10,6 +10,21 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      "**/.next/",
+      "**/node_modules/",
+      "src/components/emsdk/**",
+      "src/components/whisper.cpp/**",
+      "public/transcriber/**",
+      "public/workers/**",
+      "public/models/**",
+      "**/*.worker.js",
+      "**/*.min.js",
+      "**/*.wasm",
+      "**/*.bin"
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

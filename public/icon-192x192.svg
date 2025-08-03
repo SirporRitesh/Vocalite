@@ -1,0 +1,9 @@
+<!-- This is a placeholder for the PWA icon. In a real project, you would have proper PNG icons. -->
+<!-- For now, we'll use SVG placeholders that can be converted to PNG later. -->
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="192" height="192" rx="32" fill="#3b82f6"/>
+<path d="M96 48C81.664 48 70 59.664 70 74v44c0 14.336 11.664 26 26 26s26-11.664 26-26V74c0-14.336-11.664-26-26-26z" fill="white"/>
+<path d="M134 110c0 20.987-17.013 38-38 38s-38-17.013-38-38h-8c0 25.405 20.595 46 46 46s46-20.595 46-46h-8z" fill="white"/>
+<rect x="92" y="148" width="8" height="20" fill="white"/>
+<rect x="76" y="164" width="40" height="8" fill="white"/>
+</svg>
