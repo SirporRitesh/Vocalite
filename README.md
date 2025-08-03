@@ -39,12 +39,14 @@ The app runs offline after the first load (except for AI API calls) with local c
 
 ---
 
+```markdown
 ## 🧭 Data Flow
 
-
+```plaintext
 User Speech → Web Speech API → Text Transcript → AI API → AI Response → Browser TTS → Audio Playback
      ↓              ↓              ↓           ↓         ↓             ↓            ↓
-  **[Local] → [Browser] → [Memory] → [Network] → [Memory] → [Browser] → [Local]**
+  [Local] → [Browser] → [Memory] → [Network] → [Memory] → [Browser] → [Local]
+```
 
 ---
 
@@ -185,7 +187,10 @@ TTS Not Working:
 - Check network connectivity
 - Review API rate limits
 
+```markdown
 ## 📁 Project Structure
+
+```plaintext
 src/
 ├── components/
 │   ├── WebSpeechRecognition.tsx    # Main voice assistant component
@@ -201,6 +206,7 @@ src/
 │   └── api/                        # API routes (if needed)
 └── styles/
     └── globals.css                 # Global styles
+```
 
     
 ## 🔄 Development Roadmap
@@ -228,11 +234,20 @@ src/
 
 ## 🤝 Contributing
 
-Fork the repository
-Create a feature branch (git checkout -b feature/amazing-feature)
-Commit your changes (git commit -m 'Add amazing feature')
-Push to the branch (git push origin feature/amazing-feature)
-Open a Pull Request
+- Fork the repository
+- Create a feature branch
+  ```bash
+  (git checkout -b feature/amazing-feature)
+  ```
+- Commit your changes
+  ```bash
+  (git commit -m 'Add amazing feature')
+  ```
+- Push to the branch
+  ```bash
+  (git push origin feature/amazing-feature)
+  ```
+- Open a Pull Request
 
 ## 🙏 Acknowledgments
 
@@ -242,6 +257,9 @@ Open a Pull Request
 - Browser vendors for speech synthesis support
 
 ## 📞 Contact
-Developer: Ritesh Sirpor
-Email: rsirpor@gmail.com
-Repository: https://github.com/SirporRitesh/Vocalite
+### Developer: Ritesh Sirpor
+### Email: rsirpor@gmail.com
+### Repository: https://github.com/SirporRitesh/Vocalite
+
+---
+*Built with ❤️ using Next.js, TypeScript, and modern web technologies*
