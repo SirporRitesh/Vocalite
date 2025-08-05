@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, MicOff, Loader, Volume2 } from "lucide-react";
 import { useTTS } from "../hooks/useTTS";
+import TextType from "@/components/ui/TextType";
 
 // Extend the Window interface to include webkitSpeechRecognition
 declare global {
@@ -339,7 +340,7 @@ export default function WebSpeechRecognition() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-goog-api-key": `AIzaSyAozrK-NIqLu6ktOBRUZXR66d_iO-NRTW4`,
+            "X-goog-api-key": process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
           },
           body: JSON.stringify(payload),
         }
@@ -579,12 +580,12 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Voice Assistant (Speech Recognition + TTS) - v1.2
-        </h1>
-        <p className="text-gray-600">Speak, get AI response, hear it back</p>
+  <div className="max-w-2xl mx-auto p-8 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl border border-white/20">
+    <div className="text-center mb-6">
+      <h1 className="text-3xl font-bold text-white mb-2">
+        Voice Assistant
+      </h1>
+      <p className="text-slate-300">Speak, get AI response, hear it back</p>
 
         {/* TTS Status Indicator */}
         <div className="mt-2 text-sm">
@@ -711,18 +712,18 @@ useEffect(() => {
         </button>
       </div>
 
-      {/* Status Indicator */}
+      {/* Status Indicator - UPDATE */}
       {isRecording && (
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Loader className="animate-spin" size={16} />
-          <span className="text-sm text-gray-600">Listening...</span>
+          <Loader className="animate-spin text-white" size={16} />
+          <span className="text-sm text-slate-300">Listening...</span>
         </div>
       )}
 
-      {/* Error Display */}
+      {/* Error Display - UPDATE */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="mb-4 p-4 bg-red-900/50 border border-red-700/50 rounded-lg backdrop-blur-sm">
+          <p className="text-red-300 text-sm">{error}</p>
         </div>
       )}
 
@@ -730,57 +731,82 @@ useEffect(() => {
       <div className="space-y-4">
         {/* Speech Transcription */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Speech:
-          </label>
-          <div className="min-h-[100px] p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <p className="text-gray-800 whitespace-pre-wrap">
-              {transcription}
-              {interimTranscript && (
-                <span className="text-gray-500 italic">
-                  {interimTranscript}
-                </span>
-              )}
-            </p>
-            {!transcription && !interimTranscript && (
-              <p className="text-gray-400 italic">
-                Your transcription will appear here...
-              </p>
-            )}
-          </div>
-        </div>
+          <label className="block text-sm font-medium text-slate-200 mb-2">
+    Your Speech:
+  </label>
+  <div className="min-h-[100px] p-4 border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm">
+    <p className="text-white whitespace-pre-wrap">
+      {transcription}
+      {interimTranscript && (
+        <span className="text-slate-400 italic">
+          {interimTranscript}
+        </span>
+      )}
+    </p>
+    {!transcription && !interimTranscript && (
+      <p className="text-slate-400 italic">
+        Your transcription will appear here...
+      </p>
+    )}
+  </div>
+</div>
 
         {/* AI Generated Response */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-slate-200 mb-2">
             AI Response:
           </label>
-          <div className="min-h-[100px] p-4 border border-green-300 rounded-lg bg-green-50">
+          <div className="min-h-[100px] p-4 border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm">
             {isGenerating ? (
               <div className="flex items-center gap-2">
-                <Loader className="animate-spin" size={16} />
-                <span className="text-gray-600 italic">
+                <Loader className="animate-spin text-white" size={16} />
+                <span className="text-slate-300 italic">
                   Generating response...
                 </span>
               </div>
             ) : (
-              <p className="text-gray-800 whitespace-pre-wrap">
-                {generatedResponse || (
-                  <span className="text-gray-400 italic">
-                    AI response will appear here...
-                  </span>
-                )}
-              </p>
+              <>
+                {/* TextType Component */}
+                <TextType
+                  key={generatedResponse || "default"}
+                  text={
+                    generatedResponse && generatedResponse.trim().length > 0
+                      ? [generatedResponse.trim()]
+                      : ["AI response will appear here..."]
+                  }
+                  typingSpeed={50}
+                  pauseDuration={3000}
+                  showCursor={true}
+                  className="text-white whitespace-pre-wrap leading-relaxed"
+                />
+                
+                {/* Fallback display in case TextType fails */}
+                <div className="mt-4 p-2 bg-blue-900/30 border border-blue-500/50 rounded text-xs">
+                  <p className="text-blue-300">
+                    <strong>Fallback Display:</strong>
+                  </p>
+                  <p className="text-white">
+                    {generatedResponse && generatedResponse.trim().length > 0
+                      ? generatedResponse.trim()
+                      : "AI response will appear here..."}
+                  </p>
+                </div>
+              </>
             )}
+            
+            {/* Debug info */}
+            <p className="text-xs text-yellow-300 mt-2 opacity-50">
+              Debug: Response length: {generatedResponse?.length || 0}
+            </p>
           </div>
         </div>
 
-        {/* Debug Messages */}
+        {/* Debug Messages - UPDATE */}
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-2">
+          <summary className="cursor-pointer text-sm font-medium text-slate-200 mb-2">
             Debug Messages ({debugMessages.length})
           </summary>
-          <div className="mt-2 p-3 bg-gray-100 rounded-lg text-xs font-mono text-gray-600 max-h-48 overflow-y-auto">
+          <div className="mt-2 p-3 bg-white/10 rounded-lg text-xs font-mono text-slate-300 max-h-48 overflow-y-auto backdrop-blur-sm">
             {debugMessages.map((message, index) => (
               <div key={index} className="mb-1">
                 {message}

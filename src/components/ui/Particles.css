@@ -1,0 +1,25 @@
+/* Particles.css */
+
+.particles-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -10;
+}
+
+.particles-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Optional: Add some subtle glow effects */
+.particles-glow {
+  filter: blur(0.5px) brightness(1.1);
+}
+
+/* Ensure proper rendering context */
+.particles-container canvas {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}

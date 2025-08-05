@@ -1,9 +1,11 @@
 // src/components/WebSpeechRecognition.tsx
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, MicOff, Loader, Volume2 } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Mic, MicOff, Loader } from "lucide-react";
 import { useTTS } from "../hooks/useTTS";
+import SpotlightCard from "./ui/SpotlightCard";
+import TextType from "@/components/ui/TextType";
 
 // Extend the Window interface to include webkitSpeechRecognition
 declare global {
@@ -90,12 +92,11 @@ export default function WebSpeechRecognition() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const hasSpokenResponse = useRef(false);
-  const speechSynthRef = useRef<SpeechSynthesis | null>(null);
   const ttsActuallyStarted = useRef(false);
-  const isTTSLocked = useRef(false); // Add at the top with other refs
-  const autoSpeakAttempts = useRef(0); // Add this ref at the top
+  const isTTSLocked = useRef(false);
+  const autoSpeakAttempts = useRef(0);
 
-  // Initialize TTS with manual initialization for development compatibility
+  // Initialize TTS
   const {
     isLoading: ttsLoading,
     isSpeaking,
@@ -106,12 +107,25 @@ export default function WebSpeechRecognition() {
     speak,
     stop: stopSpeaking,
     initialize: initTTS,
-    // testBrowserTTS, // Add this line
   } = useTTS({
     debug: true,
-    autoInit: false, // Disable auto-init to manually control initialization
+    autoInit: false,
   });
 
+  // ✅ MOVE useMemo HERE - BEFORE any early returns
+  const textTypeText = useMemo(() => {
+    return generatedResponse && generatedResponse.trim().length > 0
+      ? [generatedResponse.trim()]
+      : ["AI response will appear here..."];
+  }, [generatedResponse]);
+
+  const textTypeTexttrans = useMemo(() => {
+    return transcription && transcription.trim().length > 0
+      ? [transcription.trim()]
+      : ["Your transcription will appear here..."];
+  }, [transcription]);
+
+  // All your useEffect hooks here...
   useEffect(() => {
     addDebugMessage("Initializing Voice Assistant...");
 
@@ -181,6 +195,7 @@ export default function WebSpeechRecognition() {
       setError("Web Speech API is not supported in this browser");
       addDebugMessage("Web Speech API not supported");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Manual TTS initialization for development/production compatibility
@@ -396,7 +411,7 @@ useEffect(() => {
     
     return () => clearTimeout(timer);
   }
-}, [transcription, isRecording, isGenerating, generatedResponse]);
+}, [transcription, isRecording, isGenerating, generatedResponse, sendToGemini]);
 
 // Auto-speak the generated response
 useEffect(() => {
@@ -447,7 +462,7 @@ useEffect(() => {
   } else {
     console.log('❌ Auto-speak conditions not met');
   }
-}, [generatedResponse, ttsInitialized, isSpeaking]); // Removed 'speak' from dependencies
+}, [generatedResponse, ttsInitialized, isSpeaking, speak]);
 
 // Clear generated response after speaking is complete
 useEffect(() => {
@@ -479,268 +494,196 @@ useEffect(() => {
   }
 }, [isGenerating]);
 
-  // Enhanced stop function with debugging and guard
-  const stop = useCallback(() => {
-    console.log('🛑 Stop requested, current state:', { 
-      isSpeaking, 
-      speechSynthSpeaking: window.speechSynthesis?.speaking,
-      speechSynthPending: window.speechSynthesis?.pending 
-    });
-    console.trace('🔍 Stop called from:'); // This will show the call stack
-    
-    // Only stop if we're actually speaking for more than 500ms
-    if (isSpeaking && window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
-      console.log('🛑 Actually stopping speech synthesis');
-      window.speechSynthesis.cancel();
-    } else {
-      console.log('⚠️ Stop called but no active speech to cancel');
-    }
-    
-    if (speechSynthRef.current) {
-      speechSynthRef.current = null;
-    }
-    
-    setIsSpeaking(false);
-    setError(null);
-  }, [isSpeaking]);
-
+  // ✅ Early return AFTER all hooks
   if (!isSupported) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <SpotlightCard 
+        className="max-w-2xl w-full p-8"
+        spotlightColor="rgba(239, 68, 68, 0.2)"
+      >
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Speech Recognition
+          <h1 className="text-3xl font-bold text-white mb-6">
+            Voice Assistant
           </h1>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-700">
+          <div className="bg-red-900/50 border border-red-700/50 rounded-lg p-6 backdrop-blur-sm">
+            <p className="text-red-200">
               Web Speech API is not supported in this browser. Please try using
               Chrome, Edge, or Safari.
             </p>
           </div>
         </div>
-      </div>
+      </SpotlightCard>
     );
   }
 
-  function testDirectTTS(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-    event.preventDefault();
-    if (!ttsInitialized) {
-      addDebugMessage("⚠️ TTS is not initialized yet. Please wait...");
-      return;
-    }
-    const testText = "This is a test of the text to speech system. If you hear this, TTS is working.";
-    addDebugMessage("🧪 Speaking test phrase via TTS...");
-    speak(testText);
-  }
-
-  
-  function testBrowserTTS(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-    event.preventDefault();
-    
-    // 🔒 Don't interfere if auto-speak is about to happen OR currently happening
-    if (generatedResponse && !hasSpokenResponse.current) {
-      addDebugMessage("⚠️ Auto-speak pending, skipping browser test");
-      return;
-    }
-    
-    if (isSpeaking) {
-      addDebugMessage("⚠️ TTS is currently speaking, skipping browser test");
-      return;
-    }
-    
-    if (isTTSLocked.current) {
-      addDebugMessage("⚠️ TTS is locked, skipping browser test");
-      return;
-    }
-    
-    // Check if voices are loaded
-    const voices = window.speechSynthesis?.getVoices() || [];
-    if (voices.length === 0) {
-      addDebugMessage("⚠️ Voices not loaded yet, cannot test");
-      return;
-    }
-    
-    const testText = "This is a test of the browser's text to speech capability.";
-    addDebugMessage("🔧 Testing browser TTS...");
-    
-    // 🔒 Lock TTS during test
-    isTTSLocked.current = true;
-    
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(testText);
-      utterance.onstart = () => addDebugMessage("▶️ Browser TTS test started");
-      utterance.onend = () => {
-        addDebugMessage("✅ Browser TTS test finished");
-        isTTSLocked.current = false; // Release lock
-      };
-      utterance.onerror = (event) => {
-        addDebugMessage(`❌ Browser TTS test error: ${event.error}`);
-        isTTSLocked.current = false; // Release lock on error
-      };
-      
-      window.speechSynthesis.speak(utterance);
-    }, 100);
-  }
-
-  const handleTTSStart = () => {
-    ttsActuallyStarted.current = true;
-  };
-
+  // Main return statement
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Voice Assistant (Speech Recognition + TTS) - v1.2
+    <SpotlightCard 
+      className="max-w-2xl w-full p-8"
+      spotlightColor="rgba(0, 229, 255, 0.2)"
+    >
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-white mb-3">
+          Voice Assistant
         </h1>
-        <p className="text-gray-600">Speak, get AI response, hear it back</p>
+        <p className="text-slate-300 text-lg">Speak, get AI response, hear it back</p>
 
         {/* TTS Status Indicator */}
-        <div className="mt-2 text-sm">
-          Status:
+        <div className="mt-4 text-sm">
+          <span className="text-slate-400">Status:</span>
           {ttsLoading && (
-            <span className="text-yellow-600 ml-1">🔄 Loading ...</span>
+            <span className="text-yellow-400 ml-2">🔄 Loading...</span>
           )}
           {ttsInitialized && !ttsError && (
-            <span className="text-green-600 ml-1">✅ Ready</span>
+            <span className="text-green-400 ml-2">✅ Ready</span>
           )}
           {ttsError && (
-            <span className="text-orange-600 ml-1">⚠️ Using Browser TTS</span>
+            <span className="text-orange-400 ml-2">⚠️ Using Browser TTS</span>
           )}
-          {/* Debug info for troubleshooting
-          <div className="text-xs text-gray-500 mt-1">
-            Loading: {ttsLoading ? 'true' : 'false'} | 
-            Initialized: {ttsInitialized ? 'true' : 'false'} | 
-            Error: {ttsError ? 'true' : 'false'}
-          </div> */}
         </div>
       </div>
 
-      {/* Recording Controls */}
-      <div className="flex justify-center gap-4 mb-6 flex-wrap">
-        {/* Start/Stop Recording */}
-        {!isRecording && (
-          <button
-            onClick={startRecording}
-            disabled={!isSupported}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            <Mic size={20} />
-            Start Recording
-          </button>
-        )}
-
-        {isRecording && (
-          <button
-            onClick={stopRecording}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all bg-red-500 hover:bg-red-600 text-white"
-          >
-            <MicOff size={20} />
-            Stop Recording
-          </button>
-        )}
-
-        {/* Clear button: only show if a response is present */}
-        {generatedResponse && (
-          <button
-            onClick={clearTranscription}
-            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-          >
-            Clear
-          </button>
-        )}
-
-        {/* Stop Speaking: only show if TTS is speaking */}
-        {isSpeaking && (
-          <button
-            onClick={() => {
-              console.log('🛑 Manual stop button clicked');
-              stopSpeaking();
-            }}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
-          >
-            Stop Speaking
-          </button>
-        )}
-      </div>
-
-      {/* Status Indicator */}
-      {isRecording && (
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Loader className="animate-spin" size={16} />
-          <span className="text-sm text-gray-600">Listening...</span>
-        </div>
-      )}
-
-      {/* Error Display */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Transcription Results */}
-      <div className="space-y-4">
-        {/* Speech Transcription */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Speech:
-          </label>
-          <div className="min-h-[100px] p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <p className="text-gray-800 whitespace-pre-wrap">
-              {transcription}
-              {interimTranscript && (
-                <span className="text-gray-500 italic">
-                  {interimTranscript}
-                </span>
-              )}
-            </p>
-            {!transcription && !interimTranscript && (
-              <p className="text-gray-400 italic">
-                Your transcription will appear here...
-              </p>
+          {/* Recording Controls */}
+          <div className="flex justify-center gap-4 mb-6 flex-wrap">
+            {/* Start/Stop Recording */}
+            {!isRecording && (
+              <button
+                onClick={startRecording}
+                disabled={!isSupported}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              >
+                <Mic size={20} />
+                Start Recording
+              </button>
             )}
-          </div>
-        </div>
 
-        {/* AI Generated Response */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            AI Response:
-          </label>
-          <div className="min-h-[100px] p-4 border border-green-300 rounded-lg bg-green-50">
-            {isGenerating ? (
-              <div className="flex items-center gap-2">
-                <Loader className="animate-spin" size={16} />
-                <span className="text-gray-600 italic">
-                  Generating response...
-                </span>
+            {isRecording && (
+              <button
+                onClick={stopRecording}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl"
+              >
+                <MicOff size={20} />
+                Stop Recording
+              </button>
+            )}
+
+            {/* Clear button: only show if a response is present */}
+            {generatedResponse && (
+              <button
+                onClick={clearTranscription}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-lg"
+              >
+                Clear
+              </button>
+            )}
+
+            {/* Stop Speaking: only show if TTS is speaking */}
+            {isSpeaking && (
+              <button
+                onClick={() => {
+                  console.log('🛑 Manual stop button clicked');
+                  stopSpeaking();
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-lg"
+              >
+                Stop Speaking
+              </button>
+            )}
+
+            {/* Test Button for TextType
+            <button
+              onClick={() => {
+                console.log("🧪 Testing TextType with hardcoded text");
+                setGeneratedResponse("This is a test response to verify that the TextType component is working correctly with typing animation. The text should appear character by character.");
+              }}
+              className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-medium"
+            >
+              🧪 Test TextType
+            </button> */}
+          </div>
+
+          {/* Status Indicator */}
+          {isRecording && (
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Loader className="animate-spin text-blue-400" size={16} />
+              <span className="text-sm text-slate-300">Listening...</span>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-900/50 border border-red-700/50 rounded-lg backdrop-blur-sm">
+              <p className="text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Transcription Results */}
+          <div className="space-y-6">
+            {/* Speech Transcription */}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-3">
+                Your Speech:
+              </label>
+              <div className="min-h-[100px] p-4 border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm">
+                <TextType
+                  key={transcription ? "transcription" : "placeholder"}
+                  text={textTypeTexttrans}
+                  typingSpeed={50}
+                  pauseDuration={3000}
+                  showCursor={false}
+                  className={
+                    transcription && transcription.trim().length > 0
+                      ? "text-white whitespace-pre-wrap leading-relaxed"
+                      : "text-slate-400 italic whitespace-pre-wrap leading-relaxed"
+                  }
+                />
               </div>
-            ) : (
-              <p className="text-gray-800 whitespace-pre-wrap">
-                {generatedResponse || (
-                  <span className="text-gray-400 italic">
-                    AI response will appear here...
-                  </span>
+            </div>
+
+            {/* AI Generated Response with TextType Animation */}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-3">
+                AI Response:
+              </label>
+              <div className="min-h-[120px] p-4 border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm">
+                {isGenerating ? (
+                  <div className="flex items-center gap-2">
+                    <Loader className="animate-spin text-white" size={16} />
+                    <span className="text-slate-300 italic">
+                      Generating response...
+                    </span>
+                  </div>
+                ) : (
+                  <TextType
+                    key={generatedResponse ? "response" : "default"}
+                    text={textTypeText}
+                    typingSpeed={50}
+                    pauseDuration={3000}
+                    showCursor={false}
+                    className={
+                      generatedResponse && generatedResponse.trim().length > 0
+                        ? "text-white whitespace-pre-wrap leading-relaxed"
+                        : "text-slate-400 italic whitespace-pre-wrap leading-relaxed"
+                    }
+                  />
                 )}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Debug Messages */}
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-2">
-            Debug Messages ({debugMessages.length})
-          </summary>
-          <div className="mt-2 p-3 bg-gray-100 rounded-lg text-xs font-mono text-gray-600 max-h-48 overflow-y-auto">
-            {debugMessages.map((message, index) => (
-              <div key={index} className="mb-1">
-                {message}
               </div>
-            ))}
+            </div>
+
+            {/* Debug Messages */}
+            <details className="mt-6">
+              <summary className="cursor-pointer text-sm font-medium text-slate-200 mb-2 hover:text-white transition-colors">
+                Debug Messages ({debugMessages.length})
+              </summary>
+              <div className="mt-3 p-4 bg-slate-900/50 border border-white/10 rounded-lg text-xs font-mono text-slate-400 max-h-48 overflow-y-auto backdrop-blur-sm">
+                {debugMessages.map((message, index) => (
+                  <div key={index} className="mb-1">
+                    {message}
+                  </div>
+                ))}
+              </div>
+            </details>
           </div>
-        </details>
-      </div>
-    </div>
+        </SpotlightCard>
   );
 }
